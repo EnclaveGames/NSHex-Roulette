@@ -1,0 +1,9 @@
+@font-face {
+    font-family: 'Alfa';
+    src: url('alfaslabone-regular-webfont.woff2') format('woff2'),
+		 url('alfaslabone-regular-webfont.ttf') format('truetype'),
+         url('alfaslabone-regular-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+
+}
