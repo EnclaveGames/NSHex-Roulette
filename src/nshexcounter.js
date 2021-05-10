@@ -738,6 +738,7 @@ class MainMenu extends Phaser.Scene {
                 ['logo-portalgames', 'img/logo-portalgames.png'],
         ['logo-neuroshimahexpl', 'img/logo-neuroshimahexpl.png'],
                 ['logo-coil', 'img/logo-coil.png'],
+                ['logo-coil-black', 'img/logo-coil-black.png'],
                 
                 ['popup-bg', 'img/popup-bg.png'],
                 ['text-areyousure-pl', 'img/lang/pl/text-areyousure.png'],
@@ -961,7 +962,7 @@ class Settings extends Phaser.Scene {
     }
     else {
       this.statsText1 = this.add.text(EPT.world.centerX, 170, EPT.text['stats-description1'], fontSmall).setOrigin(0.5,0);
-      this.logoCoil = new Button(EPT.world.centerX, 390, 'logo-coil', this.clickCoil, this, 'noframes').setOrigin(0.5, 0.5);
+      this.logoCoil = new Button(EPT.world.centerX, 390, 'logo-coil-black', this.clickCoil, this, 'noframes').setOrigin(0.5, 0.5);
       this.statsText2 = this.add.text(EPT.world.centerX, 490, EPT.text['stats-description2'], fontSmall).setOrigin(0.5,0);
       this.bannerBeer = new Button(EPT.world.centerX, 660, 'button-beer', this.clickBeer, this, 'noframes').setOrigin(0.5, 0.5).setScale(1.25);
       this.statsText3 = this.add.text(EPT.world.centerX, 760, EPT.text['stats-description3'], fontSmall).setOrigin(0.5,0);
