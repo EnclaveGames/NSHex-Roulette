@@ -1,0 +1,27 @@
+{
+  "name": "nshex-roulette",
+  "version": "1.0.0",
+  "description": "Digital expansion to the Neuroshima Hex board game.",
+  "main": "index.js",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "http-server -c-1 -p 8080 -o /index-dev.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EnclaveGames/NSHex-Roulette.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/EnclaveGames/NSHex-Roulette/issues"
+  },
+  "homepage": "https://github.com/EnclaveGames/NSHex-Roulette#readme",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "javascript-obfuscator": "^5.10.0",
+    "terser": "^5.51.2"
+  }
+}
