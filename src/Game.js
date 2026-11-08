@@ -319,7 +319,7 @@ class Game extends Phaser.Scene {
             this.popupOverlay.y = EPT.world.height;
             this.popupContainer.y = EPT.world.height;
             this.popupContainer.setScale(1);
-        }, onCompleteScope: this});
+        }, callbackScope: this});
     }
     disableSpinning() {
         this.canSpin = false;

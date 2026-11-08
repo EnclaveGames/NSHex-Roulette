@@ -1,5 +1,5 @@
 // generated into sw.js by build.js - do not edit sw.js directly
-var VERSION = 'c25d5dba9c';
+var VERSION = '874658092a';
 var CACHE = 'nshex-roulette-' + VERSION;
 var FILES = [
   "ept.webmanifest",
