@@ -271,6 +271,7 @@ class Game extends Phaser.Scene {
         EPT.Sfx.play('click');
         this.tweens.add({targets: this.popupOverlay, alpha: 0, duration: 150, ease: 'Linear'});
         this.tweens.add({targets: this.popupContainer, x: EPT.world.centerX, y: 360, scaleX: 0, scaleY: 0, duration: 150, ease: 'Linear', onComplete: function(){
+            if(!this.popupOverlay || !this.popupContainer || !this.popupOverlay.scene) { return; }
             this.popupOverlay.setAlpha(0.75);
             this.popupOverlay.y = EPT.world.height;
             this.popupContainer.y = EPT.world.height;

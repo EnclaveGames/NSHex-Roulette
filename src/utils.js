@@ -55,12 +55,12 @@ EPT.Sfx = {
 	},
 	play: function(audio) {
     if(audio == 'music') {
-      if(EPT.Sfx.status['music'] && EPT.Sfx.music && !EPT.Sfx.music.isPlaying) {
+      if(EPT.Sfx.status && EPT.Sfx.status['music'] && EPT.Sfx.music && !EPT.Sfx.music.isPlaying) {
         EPT.Sfx.music.play({loop:true});
       }
     }
     else { // sound
-      if(EPT.Sfx.status['sound'] && EPT.Sfx.sounds && EPT.Sfx.sounds[audio]) {
+      if(EPT.Sfx.status && EPT.Sfx.status['sound'] && EPT.Sfx.sounds && EPT.Sfx.sounds[audio]) {
         EPT.Sfx.sounds[audio].play();
       }
     }
