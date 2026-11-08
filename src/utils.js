@@ -95,6 +95,88 @@ EPT.fadeOutIn = function(passedCallback, context) {
     callbackScope: context
   });  
 }
+// any landscape screen (phones, tablets, laptops) gets the wide layout
+EPT.isWide = function() {
+  return window.innerHeight >= 200 && window.innerWidth/window.innerHeight >= 1.25;
+};
+
+EPT.setWorldSize = function(scene, wide) {
+  var width = wide ? 1280 : 640, height = wide ? 720 : 960;
+  if(scene.scale.width !== width || scene.scale.height !== height) {
+    scene.scale.setGameSize(width, height);
+  }
+  EPT.world = { width: width, height: height, centerX: width/2, centerY: height/2 };
+};
+
+// repeats a 640px wide image across the whole canvas, mirroring every other copy so the seams are not visible
+EPT.strip = function(scene, key, y, mirror) {
+  var list = [];
+  for(var x = 0; x < EPT.world.width; x += 640) {
+    var sprite = scene.add.sprite(x, y, key).setOrigin(0, 0);
+    if(mirror && (x/640)%2 == 1) { sprite.setFlipX(true); }
+    list.push(sprite);
+  }
+  return list;
+};
+
+// scenes built for one layout restart when the window changes to the other one;
+// isBusy (optional) postpones the restart, e.g. while the wheel is spinning
+EPT.watchLayout = function(scene, isBusy) {
+  var wide = EPT.world.width > 640;
+  var timer = null;
+  var check = function() {
+    clearTimeout(timer);
+    timer = setTimeout(function() {
+      if(!scene.sys || !scene.sys.isActive() || EPT.isWide() === wide) { return; }
+      if(isBusy && isBusy.call(scene)) { check(); return; }
+      scene.scene.restart();
+    }, 200);
+  };
+  window.addEventListener('resize', check);
+  window.addEventListener('orientationchange', check);
+  scene.events.once('shutdown', function() {
+    clearTimeout(timer);
+    window.removeEventListener('resize', check);
+    window.removeEventListener('orientationchange', check);
+  });
+};
+
+// keeps the screen on while the app is in use; browsers release the lock when the tab is hidden, so ask again on return
+EPT.WakeLock = {
+  lock: null,
+  active: false,
+  request: function() {
+    if(!EPT.WakeLock.active || !navigator.wakeLock || document.visibilityState !== 'visible') { return; }
+    navigator.wakeLock.request('screen').then(function(lock) {
+      EPT.WakeLock.lock = lock;
+      lock.addEventListener('release', function() {
+        if(EPT.WakeLock.lock === lock) { EPT.WakeLock.lock = null; }
+      });
+    }).catch(function() {});
+  },
+  start: function() {
+    if(EPT.WakeLock.active) { return; }
+    EPT.WakeLock.active = true;
+    document.addEventListener('visibilitychange', EPT.WakeLock.request);
+    EPT.WakeLock.request();
+  },
+  stop: function() {
+    EPT.WakeLock.active = false;
+    document.removeEventListener('visibilitychange', EPT.WakeLock.request);
+    if(EPT.WakeLock.lock) {
+      EPT.WakeLock.lock.release().catch(function() {});
+      EPT.WakeLock.lock = null;
+    }
+  }
+};
+
+// short vibration feedback where the browser supports it (Android); it follows the Sound setting so a muted phone stays still
+EPT.haptic = function(pattern) {
+  if(navigator.vibrate && EPT.Sfx.status && EPT.Sfx.status['sound']) {
+    try { navigator.vibrate(pattern); } catch(e) {}
+  }
+};
+
 EPT.fadeOutScene = function(sceneName, context) {
   context.cameras.main.fadeOut(250);
   context.time.addEvent({
@@ -319,25 +401,15 @@ this app to your language?\n\
 Let us know at\n\
 nshex@enclavegames.com!',
       'stats-title': 'Statistics',
-      'stats-description1': '\
-The NSHex Roulette app is free,\n\
-but you can appreciate that fact\n\
-either by becoming a Web Monetized\n\
-power user - a Coil subscriber:',
-      'stats-description2': '\
-or sending us a few bucks for\n\
-a beer (or coffee!) directly:',
-      'stats-description3': '\
-Coil subscribers will see here\n\
-statistics of their gameplays.',
-      'stats-thanks1': '\
-Thank you for being Coil\'s\n\
-Web Monetized power user\n\
-and supporting Enclave Games!',
-      'stats-thanks2': '\
-We\'re working on delivering\n\
-the ability to track statistics\n\
-of your gameplays - coming soon!',
+      'support-title': 'Support us',
+      'support-text1': '\
+NSHex Roulette is free and has\n\
+no ads. If it helped your games,\n\
+you can buy us a beer\n\
+(or coffee!):',
+      'support-text2': '\
+Thank you - it keeps new\n\
+Neuroshima Hex tools coming!',
 
       'stats-gameplays': 'Gameplays',
       'stats-pergame': 'per game',
@@ -443,25 +515,16 @@ usuwany z gry.',
       'language-title': 'Język',
       'language-help': '',
       'stats-title': 'Statystyki',
-      'stats-description1': '\
-Aplikacja NSHex Roulette jest\n\
-darmowa, ale mimo wszystko nadal\n\
-możesz nas wesprzeć  - albo\n\
-zakładając konto w serwisie Coil:',
-      'stats-description2': '\
-albo wysyłając kilka złotych\n\
-na piwo (lub kawę!) bezpośrednio:',
-      'stats-description3': '\
-Subskrybenci Coil będą mogli\n\
-zobaczyć tu statystyki swoich gier.',
-      'stats-thanks1': '\
-Dzięki za bycie aktywnym\n\
-subskrybentem serwisu Coil\n\
-i wspieranie Enclave Games!',
-      'stats-thanks2': '\
-Pracujemy nad możliwością\n\
-zapisu statystyk Twoich gier - \n\
-taka opcja pojawi się wkrótce!',
+      'support-title': 'Wesprzyj nas',
+      'support-text1': '\
+NSHex Roulette jest darmowy\n\
+i bez reklam. Jeśli pomógł\n\
+w Waszych grach, możecie\n\
+postawić nam piwo (lub kawę!):',
+      'support-text2': '\
+Dziękujemy - dzięki temu\n\
+powstają kolejne narzędzia\n\
+do Neuroshima Hex!',
 
       'stats-gameplays': 'Rozgrywki',
       'stats-pergame': 'na grę',

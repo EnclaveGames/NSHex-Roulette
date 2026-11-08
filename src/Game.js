@@ -3,8 +3,25 @@ class Game extends Phaser.Scene {
         super('Game');
     }
     create() {
-        this.add.sprite(0, 0, 'background').setOrigin(0, 0);
-        this.add.sprite(0, EPT.world.height, 'background-overlay').setOrigin(0, 1);
+        EPT.setWorldSize(this, EPT.isWide());
+        var keep = EPT._rouletteRun; // set when the layout changes mid-game, so the spins already made are not lost
+        EPT._rouletteRun = null;
+        // called only when the layout is about to change: wait for the spin, then remember the run
+        EPT.watchLayout(this, function() {
+            if(this.spinning) { return true; }
+            EPT._rouletteRun = { slices: this.sliceIndexes, degrees: this.degrees || 0, prize: this.prize };
+            return false;
+        });
+        var wide = EPT.world.width > 640;
+        this.wide = wide;
+        EPT.strip(this, 'background', 0, true);
+        if(wide) { this.add.sprite(EPT.world.width-640, EPT.world.height-307, 'background-overlay').setOrigin(0, 0); }
+        else { EPT.strip(this, 'background-overlay', EPT.world.height-307); }
+        EPT.WakeLock.start();
+        this.events.once('shutdown', function() { EPT.WakeLock.stop(); });
+        this.spinning = false;
+        // the wheel stays on the left in landscape, the spin button and the result go to the right
+        this.panelX = wide ? 940 : EPT.world.centerX;
 
         this.sliceNames = [
             EPT.text['rules-tile6-title'],
@@ -32,6 +49,7 @@ class Game extends Phaser.Scene {
         ];
 
         this.sliceIndexes = [0,1,2,3,4,5];
+        if(keep) { this.sliceIndexes = keep.slices.slice(); }
 
         this.fontTitle = { font: "56px Berlin", fill: "#FFF", stroke: "#000", strokeThickness: 4, align: "center" };
         var fontTitle = { font: "56px Berlin", fill: "#FFF", stroke: "#000", strokeThickness: 4, align: "center" };
@@ -45,8 +63,10 @@ class Game extends Phaser.Scene {
         this.counterCurrent = this.add.text(EPT.world.width-78, 20, "5", fontDigits);
         this.counterCurrent.setOrigin(1, 0);
 
-        var wheelX = EPT.world.centerX;
-        var wheelY = EPT.world.centerY-190;
+        var wheelX = wide ? 340 : EPT.world.centerX;
+        var wheelY = wide ? 360 : EPT.world.centerY-190;
+        this.wheelX = wheelX;
+        this.wheelY = wheelY;
 
         var wheelShadow = this.add.sprite(wheelX, wheelY, 'roulette-shadow');
         wheelShadow.setOrigin(0.5);
@@ -59,28 +79,56 @@ class Game extends Phaser.Scene {
 
         this.wheelContainer.add(this.wheel);
 
-        this.buttonSpin = new Button(EPT.world.centerX, EPT.world.centerY+165, 'button-spin-'+EPT.Lang.current, this.spin, this);
+        this.buttonSpin = new Button(this.panelX, wide ? 215 : EPT.world.centerY+165, 'button-spin-'+EPT.Lang.current, this.spin, this);
         this.buttonSpin.setOrigin(0.5, 0.5);
-        this.prizeText = this.add.text(EPT.world.centerX, 755, "", fontTitle);
+        this.prizeText = this.add.text(this.panelX, wide ? 330 : 755, "", fontTitle);
         this.prizeText.setOrigin(0.5);
 
         this.buttonBack = new Button(0, 0, 'button-home', this.popupShow, this, 'noframes');
         this.buttonBack.setOrigin(0, 0);
 
-        var wheelShadow = this.add.sprite(EPT.world.centerX, EPT.world.centerY-190, 'roulette-overlay');
+        var wheelShadow = this.add.sprite(wheelX, wheelY, 'roulette-overlay');
         wheelShadow.setOrigin(0.5);
-        var wheelIndicator = this.add.sprite(EPT.world.centerX, EPT.world.centerY-190, 'roulette-texture');
+        var wheelIndicator = this.add.sprite(wheelX, wheelY, 'roulette-texture');
         wheelIndicator.setOrigin(0.5);
 
         this.enableSpinning();
 
         this.popupInit();
 
+        if(keep) {
+            for(var mark = 1; mark <= 5; mark++) {
+                if(this.sliceIndexes.indexOf(mark) < 0) { this.black1 = this.addMark(mark, 1); }
+            }
+            this.degrees = keep.degrees;
+            this.prize = keep.prize;
+            this.wheelContainer.setAngle(keep.degrees);
+            this.counterCurrent.setText(""+(this.sliceIndexes.length-1));
+            if(keep.prize !== undefined) {
+                this.showTile(keep.prize);
+                this.tileImg.alpha = 1;
+            }
+            if(this.sliceIndexes.length-1 <= 0) { this.disableSpinning(); }
+        }
+
         this.cameras.main.fadeIn(250);
+    }
+    // black X over a wheel slice that is used up; it rotates together with the wheel
+    addMark(index, alpha) {
+        var container = this.add.container(0, 0);
+        var mark = this.add.sprite(50, 0, 'black');
+        mark.setOrigin(1,1);
+        container.add(mark);
+        container.angle = 360 - index*60;
+        this.wheelContainer.add(container);
+        mark.alpha = alpha;
+        return mark;
     }
     spin(){
         if(this.canSpin){
             EPT.Sfx.play('spin');
+            EPT.haptic(15);
+            this.spinning = true;
             this.disableSpinning();
             this.hideTile();
             this.prizeText.text = "";
@@ -117,14 +165,7 @@ class Game extends Phaser.Scene {
             });
 
             if(randomIndex != 0) {
-                this.black1Container = this.add.container(0, 0);
-                this.black1 = this.add.sprite(50, 0, 'black'); // black X
-                this.black1.setOrigin(1,1);
-                
-                this.black1Container.add(this.black1);
-                this.black1Container.angle = 360 - this.degrees;
-                this.wheelContainer.add(this.black1Container);
-                this.black1.alpha = 0;
+                this.black1 = this.addMark(randomIndex, 0); // black X
             }
 
             if(this.sliceIndexes.length == 1) {
@@ -134,8 +175,8 @@ class Game extends Phaser.Scene {
         }
     }
     initTiles() {
-        var posX = EPT.world.centerX-(589/2);
-        var posY = EPT.world.centerY+250;
+        var posX = this.panelX-(589/2);
+        var posY = this.wide ? 400 : EPT.world.centerY+250;
         this.tileContainer = this.add.container(posX, posY);
 
         var fontTitle = { font: "42px Berlin", fill: "#FFF" };
@@ -194,7 +235,8 @@ class Game extends Phaser.Scene {
 
         this.showTile(this.prize);
 
-        var tweenedCoin = this.add.sprite(EPT.world.centerX, 146, 'tiles', this.prize);
+        EPT.haptic([10, 30, 10]);
+        var tweenedCoin = this.add.sprite(this.wheelX, this.wheelY-144, 'tiles', this.prize);
         tweenedCoin.setOrigin(0.5,0.5);
         tweenedCoin.alpha = 0;
 
@@ -212,6 +254,7 @@ class Game extends Phaser.Scene {
             repeat: 0,
             onComplete: function () {
                 tweenedCoin.destroy();
+                that.spinning = false;
                 that.tileImg.alpha = 1;
                 that.enableSpinning();
 
@@ -243,7 +286,7 @@ class Game extends Phaser.Scene {
         emitter.setBlendMode(Phaser.BlendModes.ADD);
     }
     popupInit() {
-        this.popupOverlay = this.add.sprite(0, EPT.world.height, 'overlay').setOrigin(0, 0).setAlpha(0.75);
+        this.popupOverlay = this.add.sprite(0, EPT.world.height, 'overlay').setOrigin(0, 0).setAlpha(0.75).setDisplaySize(EPT.world.width, EPT.world.height);
         this.popupContainer = this.add.container(0, EPT.world.height);
         var popupBg = this.add.sprite(EPT.world.centerX, 200, 'popup-bg').setOrigin(0.5);
         var popupTitle = this.add.sprite(EPT.world.centerX, 130, 'text-areyousure-'+EPT.Lang.current).setOrigin(0.5);

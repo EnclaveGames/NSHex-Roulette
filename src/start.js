@@ -1,11 +1,3 @@
-// var enablePWA = false;
-// if(enablePWA) {
-// 	// SERVICE WORKER
-// 	if('serviceWorker' in navigator) {
-// 		navigator.serviceWorker.register('./js/sw.js');
-// 	}
-// }
-
 // Phaser 3.52 throws when a pointer is released outside the canvas (pointer.camera is unset), which leaves the drag state stuck
 Phaser.Input.InputPlugin.prototype.sortGameObjects = function(gameObjects, pointer) {
 	if(gameObjects.length < 2) { return gameObjects; }

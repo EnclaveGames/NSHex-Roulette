@@ -4,8 +4,12 @@ class MainMenu extends Phaser.Scene {
         this.bgFilesLoaded = false;
     }
     create() {
-        this.add.sprite(0, 0, 'background').setOrigin(0, 0);
-        var topbar = this.add.sprite(0, 0, 'img-topbar').setOrigin(0, 0);
+        EPT.setWorldSize(this, EPT.isWide());
+        EPT.watchLayout(this);
+        var wide = EPT.world.width > 640;
+        var L = wide ? 320 : EPT.world.centerX, R = wide ? 960 : EPT.world.centerX; // left and right column in landscape
+        EPT.strip(this, 'background', 0, true);
+        EPT.strip(this, 'img-topbar', 0);
 
         EPT.Storage.initUnset('NSHexRoulette-gameplays', 0);
         EPT.Stats.gameplays = EPT.Storage.get('NSHexRoulette-gameplays');
@@ -27,18 +31,20 @@ class MainMenu extends Phaser.Scene {
         this.waitingForSettings = false;
         this.waitingForStart = false;
 
-        this.logoRoulette = this.add.sprite(EPT.world.centerX, 150, 'logo-roulette', 1);
+        this.logoRoulette = this.add.sprite(L, wide ? 200 : 150, 'logo-roulette', 1);
         this.logoRoulette.setOrigin(0.5, 0.5);
 
         var fontMenuIntro = { font: EPT.text['STYLE']+'30px '+EPT.text['FONT'], fill: '#000', align: 'center' };
-        this.add.text(EPT.world.centerX, 275, EPT.text['menu-intro'], fontMenuIntro).setOrigin(0.5, 0);
+        this.add.text(L, wide ? 320 : 275, EPT.text['menu-intro'], fontMenuIntro).setOrigin(0.5, 0);
 
-        this.buttonStart = new Button(EPT.world.centerX, 500, 'button-start-'+EPT.Lang.current, this.clickStart, this);
+        this.startX = R;
+        this.startY = wide ? 260 : 500;
+        this.buttonStart = new Button(this.startX, this.startY, 'button-start-'+EPT.Lang.current, this.clickStart, this);
         this.buttonStart.setOrigin(0.5, 0.5);//.setAlpha(0.5);
 
-        this.buttonRules = new Button(EPT.world.centerX, EPT.world.height-275, 'button-rules-'+EPT.Lang.current, this.clickRules, this).setOrigin(0.5);
+        this.buttonRules = new Button(R, wide ? 420 : EPT.world.height-275, 'button-rules-'+EPT.Lang.current, this.clickRules, this).setOrigin(0.5);
 
-        var tiles = this.add.sprite(EPT.world.centerX, EPT.world.height-100, 'img-tiles');
+        var tiles = this.add.sprite(wide ? L : EPT.world.centerX, wide ? 560 : EPT.world.height-100, 'img-tiles');
         tiles.setOrigin(0.5, 0.5);
 
         this.buttonSettings = new Button(EPT.world.width-20, EPT.world.height-20, 'button-settings', this.clickSettings, this, 'noframes').setOrigin(1, 1);
@@ -88,7 +94,7 @@ class MainMenu extends Phaser.Scene {
             var animationFramesStart = this.anims.generateFrameNumbers('loader-yellow');
             animationFramesStart.pop();
             this.waitingForStart = true;
-            var fakeButtonStart = this.add.sprite(EPT.world.centerX, 500, 'button-start-'+EPT.Lang.current, 3).setOrigin(0.5, 0.5);
+            var fakeButtonStart = this.add.sprite(this.startX, this.startY, 'button-start-'+EPT.Lang.current, 3).setOrigin(0.5, 0.5);
             this.buttonStart.destroy();
             var loadAnimationStart = this.anims.create({
                 key: 'loading',
@@ -96,7 +102,7 @@ class MainMenu extends Phaser.Scene {
                 frameRate: 12,
                 repeat: -1
             });
-            this.loadImageStart = this.add.sprite(EPT.world.centerX, 490, 'loader-yellow').setOrigin(0.5,0.5);
+            this.loadImageStart = this.add.sprite(this.startX, this.startY-10, 'loader-yellow').setOrigin(0.5,0.5);
             this.loadImageStart.play('loading');
         }
     }
@@ -107,6 +113,7 @@ class MainMenu extends Phaser.Scene {
         EPT.fadeOutScene('Rules', this);
     }
     startPreloadInTheBackground() {
+        if(this.bgFilesLoaded) { return; }
         this.load.image('img/button-home');
         this.load.once('filecomplete', this.addFiles, this);
         this.load.start();
@@ -119,8 +126,6 @@ class MainMenu extends Phaser.Scene {
                 ['overlay', 'img/overlay.png'],
                 ['logo-portalgames', 'img/logo-portalgames.png'],
 				['logo-neuroshimahexpl', 'img/logo-neuroshimahexpl.png'],
-                ['logo-coil', 'img/logo-coil.png'],
-                ['logo-coil-black', 'img/logo-coil-black.png'],
                 
                 ['popup-bg', 'img/popup-bg.png'],
                 ['text-areyousure-pl', 'img/lang/pl/text-areyousure.png'],
@@ -129,6 +134,7 @@ class MainMenu extends Phaser.Scene {
 			'spritesheet': [
 				['button-statistics-en', 'img/lang/en/button-statistics.png', {frameWidth:300,frameHeight:85}],
 				['button-more-en', 'img/lang/en/button-more.png', {frameWidth:300,frameHeight:85}],
+				['button-support-en', 'img/lang/en/button-support.png', {frameWidth:300,frameHeight:85}],
 				['button-language-en', 'img/lang/en/button-language.png', {frameWidth:300,frameHeight:85}],
 				['button-credits-en', 'img/lang/en/button-credits.png', {frameWidth:300,frameHeight:85}],
 				['button-copyright-en', 'img/lang/en/button-copyright.png', {frameWidth:300,frameHeight:85}],
@@ -137,6 +143,7 @@ class MainMenu extends Phaser.Scene {
 
                 ['button-statistics-pl', 'img/lang/pl/button-statistics.png', {frameWidth:300,frameHeight:85}],
 				['button-more-pl', 'img/lang/pl/button-more.png', {frameWidth:300,frameHeight:85}],
+				['button-support-pl', 'img/lang/pl/button-support.png', {frameWidth:300,frameHeight:85}],
 				['button-language-pl', 'img/lang/pl/button-language.png', {frameWidth:300,frameHeight:85}],
 				['button-credits-pl', 'img/lang/pl/button-credits.png', {frameWidth:300,frameHeight:85}],
 				['button-copyright-pl', 'img/lang/pl/button-copyright.png', {frameWidth:300,frameHeight:85}],

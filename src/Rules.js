@@ -3,9 +3,12 @@ class Rules extends Phaser.Scene {
         super('Rules');
     }
     create() {
-		this.add.sprite(0, 0, 'background').setOrigin(0, 0);
+		EPT.setWorldSize(this, EPT.isWide());
+		EPT.watchLayout(this);
+		var wide = EPT.world.width > 640;
+		EPT.strip(this, 'background', 0, true);
 		// console.log('Rules');
-		this.navbar = this.add.sprite(0, 0, 'img-navbar').setOrigin(0, 0);
+		this.navbar = EPT.strip(this, 'img-navbar', 0);
 		this.buttonBack = new Button(10, 10, 'button-back', this.clickBack, this, 'noframes').setOrigin(0, 0);
 
 		var fontTitle = { font: EPT.text['STYLE']+'40px '+EPT.text['FONT'], fill: '#fff', align: 'center' };
@@ -21,7 +24,7 @@ class Rules extends Phaser.Scene {
 		var delta = 32;
 		var yOff = 5;
 		var xOff = 20;
-		this.rulesContainer = this.add.container(0, 0);
+		this.rulesContainer = this.add.container(wide ? EPT.world.centerX-320 : 0, 0);
 
 		this.rulesIntroText = this.add.text(offsetLeft, offsetTop+0*delta, EPT.text['rules-intro-text'], fontSmall);
 		this.rulesQuoteText = this.add.text(offsetLeft+30, offsetTop+15+6*delta, EPT.text['rules-quote-text'], fontSmall);
@@ -78,16 +81,16 @@ class Rules extends Phaser.Scene {
 		this.titleRules = this.add.text(EPT.world.centerX, 45, EPT.text['rules-title'], fontTitle);
 		this.titleRules.setOrigin(0.5, 0.5);
 		this.containerRulesBar = this.add.container(0, 0);
-		this.containerRulesBar.add([this.navbar,this.buttonBack,this.titleRules]);
+		this.containerRulesBar.add(this.navbar.concat([this.buttonBack,this.titleRules]));
 
 		// ADD SWPIE BUTTONS
 
-		this.add.sprite(0, EPT.world.height-70, 'background-overlay').setOrigin(0, 0);
+		EPT.strip(this, 'background-overlay', EPT.world.height-70);
 
 		this.pageMin = 1;
 		this.pageCur = 1;
-		this.pageMax = 5;
-		this.pageStep = [
+		this.pageMax = wide ? 6 : 5;
+		this.pageStep = wide ? [0, 400, 400, 400, 400, 400, 330] : [
 			0,
 			EPT.world.height*0.5,
 			EPT.world.height*0.5,
